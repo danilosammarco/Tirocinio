@@ -1,15 +1,10 @@
-import os
-import glob
-import sys
-import numpy as np 
-import cv2
-import time
-
+#Import aaaa
 try:
     from PyQt5.QtCore import *
     from PyQt5.QtGui import *
     from PyQt5.QtWidgets import *
     import os
+    import glob
     import sys
     import numpy as np 
     import cv2
@@ -17,7 +12,7 @@ except ImportError:
     print("Please install the required packages.")
     sys.exit()
 
-#VARIABILI GLOBALI
+#Global variables
 positionsPoint=[[-1,-1],[-1,-1],[-1,-1],[-1,-1],[-1,-1]]
 img=cv2.imread("")
 checkDrawEllipse = False
@@ -28,11 +23,12 @@ class MainWindow(QMainWindow):
     
 
     def __init__(self):
-        # || GRAFICA ||
+        print("Prova")
+        # || GRAPHICS ||
         QMainWindow.__init__(self)
         self.setWindowTitle('VAMPIRE')
 
-        # || GRAFICA || - MENU -
+        # || GRAPHICS || - MENU -
         mainMenu = self.menuBar()
         fileMenu = mainMenu.addMenu('File')
         editMenu = mainMenu.addMenu('Edit')
@@ -44,7 +40,7 @@ class MainWindow(QMainWindow):
         cWidget = QWidget(self)
         mainLayout = QHBoxLayout()
         
-        # || GRAFICA || - FIRST COLUMN: FOLDER -
+        # || GRAPHICS || - FIRST COLUMN: FOLDER -
         boxFolderLayout = QVBoxLayout()
         folder = QPushButton('Change folder', cWidget)
         folder.clicked.connect(self.changeFolder)
@@ -56,7 +52,7 @@ class MainWindow(QMainWindow):
         self.loadImage()
         mainLayout.addLayout(boxFolderLayout)
 
-        # || GRAFICA || - SECOND COLUMN: IMAGE -
+        # || GRAPHICS || - SECOND COLUMN: IMAGE -
         buttonImageLayout = QVBoxLayout()
         imageLayout = QHBoxLayout()
         od = QPushButton('Optic Disc', cWidget)
@@ -74,7 +70,7 @@ class MainWindow(QMainWindow):
         buttonImageLayout.addWidget(self.label)
         mainLayout.addLayout(buttonImageLayout)
 
-        # || THIRD COLUMN || - BUTTON -
+        # || GRAPHICS || -THIRD COLUMN: BUTTON -
         buttonLayout = QVBoxLayout()
         buttonLayout.setSpacing(2)
         mainLayout.addLayout(buttonLayout)
