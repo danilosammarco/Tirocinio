@@ -1,4 +1,4 @@
-#Import aaaa
+#Import
 try:
     from PyQt5.QtCore import *
     from PyQt5.QtGui import *
@@ -8,6 +8,7 @@ try:
     import sys
     import numpy as np 
     import cv2
+    import csv
 except ImportError:
     print("Please install the required packages.")
     sys.exit()
@@ -23,7 +24,6 @@ class MainWindow(QMainWindow):
     
 
     def __init__(self):
-        print("Prova")
         # || GRAPHICS ||
         QMainWindow.__init__(self)
         self.setWindowTitle('VAMPIRE')
@@ -58,7 +58,9 @@ class MainWindow(QMainWindow):
         od = QPushButton('Optic Disc', cWidget)
         od.clicked.connect(self.opticDisc)
         macula = QPushButton('Macula', cWidget)
+        macula.clicked.connect(self.macula)
         vessel = QPushButton('Vessel', cWidget)
+        vessel.clicked.connect(self.vessel)
         imageLayout.addWidget(od)
         imageLayout.addWidget(macula)
         imageLayout.addWidget(vessel)
@@ -74,13 +76,12 @@ class MainWindow(QMainWindow):
         buttonLayout = QVBoxLayout()
         buttonLayout.setSpacing(2)
         mainLayout.addLayout(buttonLayout)
-        prevImage = QPushButton('Previously image', cWidget)
-        buttonLayout.addWidget(prevImage)
-        saveImage = QPushButton('Save image', cWidget)
-        buttonLayout.addWidget(saveImage)
-        saveImage.clicked.connect(saveImageDef)
-        nextImage = QPushButton('Next image', cWidget)
-        buttonLayout.addWidget(nextImage)
+        self.prevImageButton = QPushButton('Previous image', cWidget)
+        self.prevImageButton.clicked.connect(self.prevImage)
+        buttonLayout.addWidget(self.prevImageButton)
+        self.nextImageButton = QPushButton('Next image', cWidget)
+        self.nextImageButton.clicked.connect(self.nextImage)
+        buttonLayout.addWidget(self.nextImageButton)
 
         cWidget.setLayout(mainLayout)
         self.setCentralWidget(cWidget)
@@ -88,6 +89,7 @@ class MainWindow(QMainWindow):
     #A new image is displayed when it is selected from the folder files
     def changeImage(self,item):
         global currentAddress, currentImage
+        self.checkPrevNextButton()
         currentImage=item.text()
         self.label.setPixmap(QPixmap(currentAddress+"/"+item.text()))
 
@@ -96,24 +98,43 @@ class MainWindow(QMainWindow):
         global currentAddress
         self.label.setPixmap(QPixmap(currentAddress+"/"+name))
 
-    #The opencv process is started for the selection of points and the determination of the ellipse
+    #Open Optic Disc
     def opticDisc(self,item):
-        global img, checkDrawEllipse, positionsPoint, currentImage
-        img=cv2.imread(currentAddress+"/"+self.listWidget.currentItem().text(),1)
-        cv2.namedWindow('image')
-        cv2.setMouseCallback('image',draw_ellipse)
-        while(1):
-            cv2.imshow("image",img)
-            key = cv2.waitKey(200)
-            if key in [27, 1048603]: # ESC key to abort, close window
-                cv2.destroyAllWindows()
-                break
-            if checkDrawEllipse == True:
-                self.changeImageTemp(currentImage)
-                cv2.destroyAllWindows()
-                break
-        positionsPoint=[[-1,-1],[-1,-1],[-1,-1],[-1,-1],[-1,-1]]
-        checkDrawEllipse = False
+        self.opticDiscWindow = Prova(currentAddress+"/"+currentImage)
+        self.opticDiscWindow.show()
+
+    # Disabled nextImageButton if the selected item is the last one, 
+    # disabled prevImageButton if the selected item is the first 
+    # and enable both button in the other case
+    def checkPrevNextButton(self):
+        row=self.listWidget.currentRow()
+        if row == 0:
+            self.prevImageButton.setEnabled(False)
+        elif row == self.listWidget.count()-1:
+            self.nextImageButton.setEnabled(False)
+        else:
+            self.prevImageButton.setEnabled(True)
+            self.nextImageButton.setEnabled(True)
+
+    def prevImage(self,event):
+        row=self.listWidget.currentRow()-1
+        self.listWidget.setCurrentRow(row)
+        #self.checkPrevNextButton()
+    
+    def nextImage(self,event):
+        row=self.listWidget.currentRow()+1
+        self.listWidget.setCurrentRow(row)
+        #self.checkPrevNextButton()
+
+    #Open Macula
+    def macula(self,item):
+        self.maculaWindow = Macula()
+        self.maculaWindow.show()
+
+    #Open Vessel
+    def vessel(self,item):
+        self.vesselWindow = Vessel()
+        self.vesselWindow.show()
 
     #To change the current folder
     def changeFolder(self):
@@ -134,44 +155,95 @@ class MainWindow(QMainWindow):
             if len(extension)>1 and extension[1] in possibleExtensions:
                 item = QListWidgetItem(i)
                 self.listWidget.addItem(item)     
+        if self.listWidget.count()!= 0:
+            self.listWidget.setCurrentRow(0)
 
-#Save the edited image temporarily
-def saveTempImage():
-    global img, checkDrawEllipse, currentImage
-    cv2.imwrite(currentAddress+"/def.jpg",img)
-    currentImage="def.jpg"
-    checkDrawEllipse = True
+class Prova(QMainWindow):
+    def __init__(self, file):
+        # || GRAPHICS ||
+        QMainWindow.__init__(self)   
+        cWidget = QWidget(self)
+        painter=OpticDisc(file)
+        self.setGeometry(10, 10, painter.pixmap.width(), painter.pixmap.height()+50) 
+        mainLayout = QVBoxLayout()
+        buttonLayout=QHBoxLayout()
+        drawEllipse = QPushButton('Draw ellipse', cWidget)
+        drawEllipse.clicked.connect(painter.drawEllipse)
+        buttonLayout.addWidget(drawEllipse)
+        saveAnnotation = QPushButton('Save annotation', cWidget)
+        saveAnnotation.clicked.connect(painter.saveAnnotation)
+        buttonLayout.addWidget(saveAnnotation)
+        mainLayout.addLayout(buttonLayout)
+        mainLayout.addWidget(painter)
+        cWidget.setLayout(mainLayout)
+        self.setCentralWidget(cWidget)
 
-#To calculate and draw the ellipse around the Optic Disc
-def draw_ellipse(event,x,y,flags,param):
-    global img
-    if event == cv2.EVENT_LBUTTONDBLCLK:
-        for i in range(0,len(positionsPoint)):
-            if positionsPoint[i]==[-1,-1]:
-                positionsPoint[i]=[x,y]
-                print(positionsPoint)
-                break
-        if positionsPoint[len(positionsPoint)-1]!=[-1,-1]:
-            ellipse = cv2.fitEllipse(np.asarray(positionsPoint))
-            cv2.ellipse(img,ellipse,(0,255,0),2)
-            saveTempImage()
-    elif event == cv2.EVENT_MOUSEWHEEL or event == cv2.EVENT_MOUSEHWHEEL:
-        if flags > 0:
-            #Su
-            img = cv2.resize(img,None,fx=0.9, fy=0.9, interpolation = cv2.INTER_CUBIC)
+class OpticDisc(QWidget):
+    def __init__(self, file):
+        # || GRAPHICS ||
+        self.drawEllipseFlag=False
+        QWidget.__init__(self)
+        self.pixmap = QPixmap(file) 
+        self.file=file   
+        self.point=[]
+
+    def paintEvent(self, e):
+        self.painter=QPainter(self)
+        self.painter.drawPixmap(QRect(0, 0, self.pixmap.width(), self.pixmap.height()), self.pixmap)
+        self.pen=QPen()
+        self.pen.setWidth(3)
+        self.painter.setPen(self.pen)
+        if self.drawEllipseFlag == False:
+            for pointToDraw in self.point:
+                self.painter.drawPoint(pointToDraw[0], pointToDraw[1])
         else:
-            #Giù
-            img = cv2.resize(img,None,fx=1.1, fy=1.1, interpolation = cv2.INTER_CUBIC)
+            ellipse = cv2.fitEllipse(np.asarray(self.point))
+            print(ellipse)
+            self.painter.drawEllipse(QPoint(ellipse[0][0],ellipse[0][1]),ellipse[1][0]/2,ellipse[1][1]/2)
+        self.painter.end()
 
-#Save the edited image definitly
-def saveImageDef(self):
-    global currentAddress, currentImage
-    img=cv2.imread(currentAddress+"/def.jpg")
-    cv2.imwrite(currentAddress+"/"+currentImage.split(".")[0]+"OpticDisc.jpg",img)
-    os.remove(currentAddress+"/def.jpg")
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            newPoint=[0,0]
+            newPoint[0]=event.pos().x()
+            newPoint[1]=event.pos().y()
+            self.point.append(newPoint)
+            self.update()
+
+    def drawEllipse(self, event):
+        print("DRAW")
+        ellipse = cv2.fitEllipse(np.asarray(self.point))
+        self.drawEllipseFlag=True
+        self.update()
+
+    def saveAnnotation(self, event):
+        print("SAVE")
+        with open ('annotation.csv', mode='w') as employee_file:
+            employee_writer = csv.writer(employee_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            textToWrite=self.file+";"
+            for i in self.point:
+                textToWrite=textToWrite+"("+str(i[0])+","+str(i[1])+"),"
+            #textToWrite=textToWrite+";"+ellipse
+            employee_writer.writerow(textToWrite)
+
+
+
+class Macula(QMainWindow):
+
+    def __init__(self):
+        # || GRAPHICS ||
+        QMainWindow.__init__(self)
+        self.setWindowTitle('VAMPIRE - Macula')
+
+class Vessel(QMainWindow):
+
+    def __init__(self):
+        # || GRAPHICS ||
+        QMainWindow.__init__(self)
+        self.setWindowTitle('VAMPIRE - Vessel')
 
 if __name__ == '__main__':
   app = QApplication(sys.argv)
   main = MainWindow()
-  main.showFullScreen()
+  main.show()
   sys.exit(app.exec_())
