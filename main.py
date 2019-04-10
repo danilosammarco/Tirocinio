@@ -1,8 +1,5 @@
-<<<<<<< HEAD
-#Import
-=======
+
 #Import libraries and check if the required packages are installeted
->>>>>>> d33efba341b5279080ce5dafe00cd305a9a6b477
 try:
     from PyQt5.QtCore import *
     from PyQt5.QtGui import *
@@ -25,8 +22,6 @@ currentAddress=os.getcwd()
 currentImage=""
 
 class MainWindow(QMainWindow):
-    
-
     def __init__(self):
         # || GRAPHICS ||
         QMainWindow.__init__(self)
@@ -104,7 +99,7 @@ class MainWindow(QMainWindow):
 
     #Open Optic Disc
     def opticDisc(self,item):
-        self.opticDiscWindow = Prova(currentAddress+"/"+currentImage)
+        self.opticDiscWindow = OpticDiscWindow(currentAddress+"/"+currentImage)
         self.opticDiscWindow.show()
 
     # Disabled nextImageButton if the selected item is the last one, 
@@ -162,12 +157,12 @@ class MainWindow(QMainWindow):
         if self.listWidget.count()!= 0:
             self.listWidget.setCurrentRow(0)
 
-class Prova(QMainWindow):
+class OpticDiscWindow(QMainWindow):
     def __init__(self, file):
         # || GRAPHICS ||
         QMainWindow.__init__(self)   
         cWidget = QWidget(self)
-        painter=OpticDisc(file)
+        painter=OpticDiscPaint(file)
         self.setGeometry(10, 10, painter.pixmap.width(), painter.pixmap.height()+50) 
         mainLayout = QVBoxLayout()
         buttonLayout=QHBoxLayout()
@@ -182,7 +177,7 @@ class Prova(QMainWindow):
         cWidget.setLayout(mainLayout)
         self.setCentralWidget(cWidget)
 
-class OpticDisc(QWidget):
+class OpticDiscPaint(QWidget):
     def __init__(self, file):
         # || GRAPHICS ||
         self.drawEllipseFlag=False
