@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 #Import
+=======
+#Import libraries and check if the required packages are installeted
+>>>>>>> d33efba341b5279080ce5dafe00cd305a9a6b477
 try:
     from PyQt5.QtCore import *
     from PyQt5.QtGui import *
