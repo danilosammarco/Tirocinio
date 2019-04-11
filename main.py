@@ -245,8 +245,10 @@ class StartSession(QMainWindow):
         nameLayout=QHBoxLayout()
         name = QLabel("NAME: ")
         self.nameEdit = QLineEdit()
+        self.nameEdit.textEdited.connect(self.checkData)
         surname = QLabel("SURNAME: ")
         self.surnameEdit = QLineEdit()
+        self.surnameEdit.textEdited.connect(self.checkData)
         nameLayout.addWidget(name)
         nameLayout.addWidget(self.nameEdit)
         nameLayout.addWidget(surname)
@@ -255,12 +257,15 @@ class StartSession(QMainWindow):
 
         clinicianLayout=QHBoxLayout()
         version = QLabel("VERSION: ")
-        self.versioneEdit = QLineEdit()
+        self.versionEdit = QLineEdit()
+        self.versionEdit.textEdited.connect(self.checkData)
         clinician = QLabel("CLINICIAN: ")
         self.clinYes = QRadioButton("YES")
         self.clinNo = QRadioButton("NO")
+        self.clinYes.clicked.connect(self.checkData)
+        self.clinNo.clicked.connect(self.checkData)
         clinicianLayout.addWidget(version)
-        clinicianLayout.addWidget(self.versioneEdit)
+        clinicianLayout.addWidget(self.versionEdit)
         clinicianLayout.addWidget(clinician)
         clinicianLayout.addWidget(self.clinYes)
         clinicianLayout.addWidget(self.clinNo)
@@ -273,9 +278,10 @@ class StartSession(QMainWindow):
         boxFolderLayout.addWidget(folderButton)
         mainLayout.addLayout(boxFolderLayout)
 
-        startButton = QPushButton('START SESSION', cWidget)
-        startButton.clicked.connect(self.startSession)
-        mainLayout.addWidget(startButton)
+        self.startButton = QPushButton('START SESSION', cWidget)
+        self.startButton.setEnabled(False)
+        self.startButton.clicked.connect(self.startSession)
+        mainLayout.addWidget(self.startButton)
 
         cWidget.setLayout(mainLayout)
         self.setCentralWidget(cWidget)            
@@ -289,10 +295,21 @@ class StartSession(QMainWindow):
             employee_writer = csv.writer(employee_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             employee_writer.writerow(['NOME',self.nameEdit.text()])
             employee_writer.writerow(['SURNAME',self.surnameEdit.text()])
-            employee_writer.writerow(['VERSION',self.versioneEdit.text()])
+            employee_writer.writerow(['VERSION',self.versionEdit.text()])
             employee_writer.writerow(['CLINICIAN',str(self.clinYes.isChecked())])
         self.close()
 
+    def checkData(self,event):
+        check=True
+        if self.nameEdit.text()=="":
+            check=False
+        elif self.surnameEdit.text()=="":
+            check=False
+        elif self.versionEdit.text()=="":
+            check=False
+        elif self.clinYes.isChecked()==False and self.clinNo.isChecked()==False:
+            check=False
+        self.startButton.setEnabled(check)
 
 class Macula(QMainWindow):
 
