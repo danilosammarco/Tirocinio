@@ -10,6 +10,7 @@ try:
     import numpy as np 
     import cv2
     import csv
+    import time
 except ImportError:
     print("Please install the required packages.")
     sys.exit()
@@ -225,6 +226,72 @@ class OpticDiscPaint(QWidget):
             #textToWrite=textToWrite+";"+ellipse
             employee_writer.writerow(textToWrite)
 
+class StartSession(QMainWindow):
+
+    def __init__(self):
+        # || GRAPHICS ||
+        QMainWindow.__init__(self)
+        self.setWindowTitle('VAMPIRE - Session')
+
+        cWidget = QWidget(self)
+        mainLayout = QVBoxLayout()
+
+        label = QLabel(self)
+        label.setAlignment(Qt.AlignCenter)
+        pixmap = QPixmap('vampire.gif')
+        label.setPixmap(pixmap)
+        mainLayout.addWidget(label)
+
+        nameLayout=QHBoxLayout()
+        name = QLabel("NAME: ")
+        self.nameEdit = QLineEdit()
+        surname = QLabel("SURNAME: ")
+        self.surnameEdit = QLineEdit()
+        nameLayout.addWidget(name)
+        nameLayout.addWidget(self.nameEdit)
+        nameLayout.addWidget(surname)
+        nameLayout.addWidget(self.surnameEdit)
+        mainLayout.addLayout(nameLayout)
+
+        clinicianLayout=QHBoxLayout()
+        version = QLabel("VERSION: ")
+        self.versioneEdit = QLineEdit()
+        clinician = QLabel("CLINICIAN: ")
+        self.clinYes = QRadioButton("YES")
+        self.clinNo = QRadioButton("NO")
+        clinicianLayout.addWidget(version)
+        clinicianLayout.addWidget(self.versioneEdit)
+        clinicianLayout.addWidget(clinician)
+        clinicianLayout.addWidget(self.clinYes)
+        clinicianLayout.addWidget(self.clinNo)
+        mainLayout.addLayout(clinicianLayout)
+
+        boxFolderLayout = QHBoxLayout()
+        folder = QLabel("SAVE ANNOTATION IN: ")
+        folderButton = QPushButton('Change folder', cWidget)
+        boxFolderLayout.addWidget(folder)
+        boxFolderLayout.addWidget(folderButton)
+        mainLayout.addLayout(boxFolderLayout)
+
+        startButton = QPushButton('START SESSION', cWidget)
+        startButton.clicked.connect(self.startSession)
+        mainLayout.addWidget(startButton)
+
+        cWidget.setLayout(mainLayout)
+        self.setCentralWidget(cWidget)            
+
+    def startSession(self):
+        self.MainWindow = MainWindow()
+        self.MainWindow.show()
+        folder=time.strftime("%Y-%m-%d&%H:%M:%S")
+        os.mkdir(folder)
+        with open (folder+'/annotationDetails.csv', mode='w') as employee_file:
+            employee_writer = csv.writer(employee_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            employee_writer.writerow(['NOME',self.nameEdit.text()])
+            employee_writer.writerow(['SURNAME',self.surnameEdit.text()])
+            employee_writer.writerow(['VERSION',self.versioneEdit.text()])
+            employee_writer.writerow(['CLINICIAN',str(self.clinYes.isChecked())])
+        self.close()
 
 
 class Macula(QMainWindow):
@@ -243,6 +310,7 @@ class Vessel(QMainWindow):
 
 if __name__ == '__main__':
   app = QApplication(sys.argv)
-  main = MainWindow()
+  #main = MainWindow()
+  main = StartSession()
   main.show()
   sys.exit(app.exec_())
