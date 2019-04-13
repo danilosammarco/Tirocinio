@@ -92,8 +92,8 @@ class MainWindow(QMainWindow):
     def changeImage(self,item):
         global currentAddress, currentImage
         self.checkPrevNextButton()
-        currentImage=item.text()
-        self.label.setPixmap(QPixmap(currentAddress+"/"+item.text()))
+        currentImage=QListWidgetItem(item).text()
+        self.label.setPixmap(QPixmap(currentAddress+"/"+QListWidgetItem(item).text()))
 
     #The image with the name 'name' is displayed. The image must be present in the folder selected in the folder widget    
     def changeImageTemp(self,name):
