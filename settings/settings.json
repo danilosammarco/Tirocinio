@@ -1,0 +1,11 @@
+{
+    "general": {
+        "name": "Danilo",
+        "surname": "Sammarco",
+        "version": "1.0",
+        "clinician": "true"
+    },
+    "opticDisc": [],
+    "macula": [],
+    "vessel": []
+}

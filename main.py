@@ -1,10 +1,6 @@
 
 #Import libraries and check if the required packages are installeted
 try:
-    from opticdisc import *
-    from settings import *
-    from macula import *
-    from vessel import *
     from PyQt5.QtCore import *
     from PyQt5.QtGui import *
     from PyQt5.QtWidgets import *
@@ -15,6 +11,11 @@ try:
     import cv2
     import csv
     import time
+    import json
+    from src.opticdisc import *
+    from src.settings import *
+    from src.macula import *
+    from src.vessel import *
 except ImportError:
     print("Please install the required packages.")
     sys.exit()
@@ -23,6 +24,7 @@ except ImportError:
 checkDrawEllipse = False
 currentAddress=os.getcwd()
 currentImage=""
+folderAnnotation=""
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -33,10 +35,10 @@ class MainWindow(QMainWindow):
         # || GRAPHICS || - MENU -
         mainMenu = self.menuBar()
         fileMenu = mainMenu.addMenu('File')
-        settingsAction=QAction(QIcon('settings.png'), '&Open settings', self)     
+        settingsAction=QAction(QIcon('img/settings.png'), '&Open settings', self)     
         settingsAction.setShortcut("Ctrl+S")
         settingsAction.triggered.connect(self.openSettings)
-        exitAction = QAction(QIcon('exit.png'), '&Exit', self)        
+        exitAction = QAction(QIcon('img/exit.png'), '&Exit', self)        
         exitAction.setShortcut('Ctrl+Q')
         exitAction.setStatusTip('Exit application')
         exitAction.triggered.connect(qApp.quit)
@@ -187,7 +189,7 @@ class StartSession(QMainWindow):
 
         label = QLabel(self)
         label.setAlignment(Qt.AlignCenter)
-        pixmap = QPixmap('vampire.gif')
+        pixmap = QPixmap('img/vampire.gif')
         label.setPixmap(pixmap)
         mainLayout.addWidget(label)
 
@@ -223,9 +225,14 @@ class StartSession(QMainWindow):
         boxFolderLayout = QHBoxLayout()
         folder = QLabel("SAVE ANNOTATION IN: ")
         folderButton = QPushButton('Change folder', cWidget)
+        folderButton.clicked.connect(self.changeFolder)
         boxFolderLayout.addWidget(folder)
         boxFolderLayout.addWidget(folderButton)
         mainLayout.addLayout(boxFolderLayout)
+
+        self.actualFolder = QLabel()
+        self.labelFolder()
+        mainLayout.addWidget(self.actualFolder)
 
         self.startButton = QPushButton('START SESSION', cWidget)
         self.startButton.setEnabled(False)
@@ -233,14 +240,17 @@ class StartSession(QMainWindow):
         mainLayout.addWidget(self.startButton)
 
         cWidget.setLayout(mainLayout)
-        self.setCentralWidget(cWidget)            
+        self.setCentralWidget(cWidget)  
+        self.readSettings()          
 
     def startSession(self):
+        global folderAnnotation
         self.MainWindow = MainWindow()
         self.MainWindow.show()
-        folder=time.strftime("%Y-%m-%d&%H:%M:%S")
-        os.mkdir(folder)
-        with open (folder+'/annotationDetails.csv', mode='w') as employee_file:
+        folderAnnotation=time.strftime("%Y-%m-%d&%H:%M:%S")
+        os.mkdir(folderAnnotation)
+        os.mkdir(folderAnnotation+"/images")
+        with open (folderAnnotation+'/annotationDetails.csv', mode='w') as employee_file:
             employee_writer = csv.writer(employee_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             employee_writer.writerow(['NOME',self.nameEdit.text()])
             employee_writer.writerow(['SURNAME',self.surnameEdit.text()])
@@ -259,14 +269,34 @@ class StartSession(QMainWindow):
         elif self.clinYes.isChecked()==False and self.clinNo.isChecked()==False:
             check=False
         self.startButton.setEnabled(check)
+    
+    def changeFolder(self):
+        global currentAddress
+        file = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
+        print(file)
+        currentAddress = file
+        self.labelFolder()
+
+    def labelFolder(self):
+        global currentAddress
+        self.actualFolder.setText("The current save folder is: " + currentAddress)
 
 
-
-
+    def readSettings(self):
+        with open("settings/settings.json", "r") as read_file:
+            data = json.load(read_file)
+        print(data['general'])
+        self.nameEdit.setText(data['general']['name'])
+        self.surnameEdit.setText(data['general']['surname'])
+        self.versionEdit.setText(data['general']['version'])
+        if data['general']['clinician'] == True:
+            self.clinYes=
+        else:
+            self.clinNo=
 
 if __name__ == '__main__':
   app = QApplication(sys.argv)
-  main = MainWindow()
-  #main = StartSession()
+  #main = MainWindow()
+  main = StartSession()
   main.show()
   sys.exit(app.exec_())
